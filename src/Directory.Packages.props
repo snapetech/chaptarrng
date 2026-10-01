@@ -12,7 +12,7 @@
     <PackageVersion Include="IPAddressRange" Version="6.3.0" />
     <PackageVersion Include="Polly" Version="8.8.0" />
     <PackageVersion Include="FluentMigrator.Runner" Version="7.2.0" />
-    <PackageVersion Include="FluentMigrator.Runner.SQLite" Version="7.2.0" />
+    <PackageVersion Include="FluentMigrator.Runner.SQLite" Version="8.0.1" />
     <PackageVersion Include="FluentMigrator.Runner.Postgres" Version="7.2.0" />
     <PackageVersion Include="FluentValidation" Version="9.5.4" />
     <PackageVersion Include="Ical.Net" Version="5.2.3" />

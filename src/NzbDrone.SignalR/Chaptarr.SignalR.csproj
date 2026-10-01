@@ -4,6 +4,10 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="NLog" />
+    <PackageReference Include="NLog.Extensions.Logging" />
+    <PackageReference Include="Sentry" />
+    <PackageReference Include="System.IO.Abstractions" />
     <ProjectReference Include="..\NzbDrone.Core\Chaptarr.Core.csproj" />
   </ItemGroup>
 </Project>

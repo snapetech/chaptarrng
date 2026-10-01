@@ -4,6 +4,7 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="FluentValidation" />
     <ProjectReference Include="..\NzbDrone.Core\Chaptarr.Core.csproj" />
   </ItemGroup>
 </Project>

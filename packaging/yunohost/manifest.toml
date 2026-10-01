@@ -62,6 +62,7 @@ ram.runtime = "512M"
 
   [resources.ports]
   main.default = 8789
+  main.exposed = false
 
   [resources.apt]
   packages = "ffmpeg php-cli php-mbstring php-xml php-curl php-zip php-json sqlite3 libsqlite3-0 rsync"

@@ -4,6 +4,7 @@
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="NLog" />
     <ProjectReference Include="..\NzbDrone.Core\Chaptarr.Core.csproj" />
   </ItemGroup>
 </Project>

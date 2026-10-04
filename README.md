@@ -31,10 +31,16 @@ runtime, while source builds require the .NET 10 SDK.
 ### What makes this fork different
 
 - **Format-scoped requests and monitoring:** SeerrNG can configure one service for ebooks and another for audiobooks, both pointing to one ChaptarrNG instance. Adds, lookups, and monitoring preserve the selected format and book.
-- **Durable pending imports:** When author metadata preparation delays an add, the API returns a pending import ID and supports reading, retrying, and cancelling that work. SeerrNG can keep a request waiting and resume it after the import completes.
+- **Durable pending imports:** When author metadata preparation delays an add, the API returns a pending import ID and supports reading, retrying, and cancelling that work. SeerrNG can show the request waiting and resume it after the import completes.
 - **Safe shared-request handling:** Retry and cancellation are fenced against concurrent work, so cancelling one SeerrNG request does not cancel a pending import still used by another request.
-- **Provider-aware compatibility:** The fork preserves the requested media type through scoped lookups and exposes the API behavior SeerrNG needs to retain provider work and edition IDs.
-- **Fork-owned releases:** Stable releases and GHCR images are built from `main` with curated fork release notes, so the maintained API changes ship together as a versioned image.
+- **Discovered integration contract:** SeerrNG can negotiate format routes, provider identity, paged library scans, and pending-import support through `GET /api/v1/system/capabilities`, while the app keeps its `Chaptarr` API identity for compatible clients.
+- **Restricted service access:** ChaptarrNG `0.9.941` and later can use a SeerrNG-only API key for book requests, searches, library status, and pending imports without granting global administration or destructive access.
+- **Direct ebook downloads:** An optional built-in indexer and download client can search configured sources, use API-key downloads, and optionally fall back to browser-assisted links. Chaptarr tracks and imports supported files without requiring a separate download-client service.
+- **Protected backups and maintained distributions:** Full backups can use passphrase-based authenticated encryption. Fork-owned releases publish container images and maintain Unraid and YunoHost packages.
+
+The [fork feature guide](docs/FORK_FEATURES.md) maps these changes to setup,
+API, security, and distribution documentation. The [changelog](CHANGELOG.md)
+has the release-by-release record.
 
 See the [SeerrNG Bookshelf backend guide](https://github.com/snapetech/seerrng/blob/main/docs/using-seerr/bookshelf-backend.md) for setup and the integration contract.
 
@@ -123,18 +129,34 @@ Note: ChaptarrNG does not create PostgreSQL databases automatically; create the 
 
 ### Direct Download sources
 
-Direct Download is a neutral, ebook-only indexer and download client. It does not provide audiobook searches, recent-item feeds, arbitrary source discovery, or a separate download workflow. Configure it only with sources you are allowed to access and use.
+Direct Download is an optional, built-in ebook indexer and download client. It does not provide audiobook searches, recent-item feeds, or automatic discovery of arbitrary sources. Configure it only with sources you are allowed to access and use.
 
 #### Configure the indexer
 
 1. Add the **Direct Download** indexer.
 2. Enter one absolute `http://` or `https://` URL per line in **URLs**.
-3. Optionally enter an **API Key**. Leave it blank when the selected source does not require one.
+3. Enter an **API Key** when the source supports fast downloads, or enable **Enable Slow-Download Browser Fallback** when you need browser-assisted links. At least one download method is required.
 4. Save the indexer and select the **Direct Download** client for it.
 
-Blank lines are ignored. Duplicate URLs are removed case-insensitively, and trailing slashes are normalized. The first occurrence remains in the configured order. Chaptarr never reorders the list or stores probe health as part of the settings. The provider Test action validates the URL list only. It does not contact the URLs, so a successful Test does not prove that a source is reachable or that it has a matching book.
+Blank lines are ignored. Duplicate URLs are removed case-insensitively, and trailing slashes are normalized. The first occurrence remains in the configured order. Chaptarr never reorders the list or stores probe health as part of the settings. The provider Test action validates the URL list and, when an API key is configured, checks it against the first source without requesting a real file. A successful Test does not search for a book or prove that a title is available.
 
 The API Key field is masked. A saved key is preserved when the indexer is edited or included in a settings backup, while API responses, logs, and validation errors must not reveal its value. Do not put credentials in a URL. If different URLs use different credentials, create separate indexers rather than placing them in one fallback list. A key must not be copied into a fallback URL or sent to a host that was not selected for the request.
+
+#### API and browser-assisted grabs
+
+When you grab a result from a supported catalog source, Chaptarr first uses
+the source's fast-download API when an API key is configured. If that cannot
+provide a file URL, the optional slow-download browser fallback can resolve a
+link in a headless browser during the background transfer. Browser fallback
+can take longer than an API grab. Direct Download is built in; it does not
+require qBittorrent, Transmission, or another external download client.
+The official Docker image includes the Playwright Chromium runtime; a custom
+image must include a matching browser runtime for this fallback to work.
+
+The built-in client reports transfer progress and keeps its state and staged
+files across restarts. Once a supported ebook file is complete, Chaptarr can
+send it through the normal import flow. See the [fork feature guide](docs/FORK_FEATURES.md#direct-ebook-downloads)
+for the behavior and safety limits.
 
 #### Ordering, probing, and fallback
 
@@ -223,7 +245,10 @@ Stable releases from the application repository's `main` branch publish the
 
 - Default ChaptarrNG web UI: http://localhost:8789
 - Default username/password: Set on first launch
+- [Fork changes and capabilities](docs/FORK_FEATURES.md): feature overview and links to detailed setup and API references
+- [Changelog](CHANGELOG.md): release-by-release changes shipped by the fork
 - [SeerrNG Bookshelf backend guide](https://github.com/snapetech/seerrng/blob/main/docs/using-seerr/bookshelf-backend.md): setup and request lifecycle
+- [SeerrNG integration contract](docs/SEERRNG_INTEGRATION.md): capabilities, service-key setup, and integration smoke test
 - [API identity and lifecycle](docs/API_IDENTITY_AND_LIFECYCLE.md): compatibility details for maintainers
 
 ## Contributing

@@ -1,5 +1,6 @@
 using System;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Extensions;
@@ -10,15 +11,10 @@ namespace NzbDrone.Core.Download.Clients.Direct
     {
         private static readonly TimeSpan NavigationTimeout = TimeSpan.FromSeconds(30);
         private static readonly TimeSpan LinkWaitTimeout = TimeSpan.FromSeconds(15);
-        private static readonly Regex SlowDownloadRegex = new(
-            @"/slow_download/[^""\s]+",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex FastDownloadRegex = new(
-            @"/fast_download/[^""\s]+",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex DirectFileRegex = new(
-            @"https?://[^""\s]+\.(?:pdf|epub|mobi|azw3|djvu|cbz|cbr|fb2|txt)(?:\?[^""\s]*)?",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly HashSet<string> DirectBookFileExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".pdf", ".epub", ".mobi", ".azw3", ".djvu", ".cbz", ".cbr", ".fb2", ".txt"
+        };
 
         private readonly Logger _logger;
 
@@ -90,7 +86,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
                 try
                 {
                     await page.WaitForSelectorAsync(
-                        "a[href*='/slow_download/'], a[href*='/fast_download/'], a[href$='.epub'], a[href$='.pdf']",
+                        "a[href*='/slow_download/'], a[href*='/fast_download/'], a[href*='.pdf' i], a[href*='.epub' i], a[href*='.mobi' i], a[href*='.azw3' i], a[href*='.djvu' i], a[href*='.cbz' i], a[href*='.cbr' i], a[href*='.fb2' i], a[href*='.txt' i]",
                         new() { Timeout = (float)LinkWaitTimeout.TotalMilliseconds });
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
@@ -98,35 +94,29 @@ namespace NzbDrone.Core.Download.Clients.Direct
                     _logger.Debug("Browser timed out or failed waiting for download links on {0}: {1}", Redact(infoUrl), ex.Message);
                 }
 
-                var content = await page.ContentAsync();
-
                 // Extract download URLs in priority order
-                var slowMatch = SlowDownloadRegex.Match(content);
-                if (slowMatch.Success)
+                var slowUrl = await GetFirstHttpLinkAsync(page, "a[href*='/slow_download/']", infoUrl);
+                if (slowUrl != null)
                 {
-                    var href = slowMatch.Value;
-                    var resolved = new Uri(new Uri(infoUrl), href).AbsoluteUri;
-                    _logger.Debug("Browser resolved slow download URL: {0}", Redact(resolved));
+                    _logger.Debug("Browser resolved slow download URL: {0}", Redact(slowUrl));
                     await CloseAsync(browser, playwright);
-                    return resolved;
+                    return slowUrl;
                 }
 
-                var fastMatch = FastDownloadRegex.Match(content);
-                if (fastMatch.Success)
+                var fastUrl = await GetFirstHttpLinkAsync(page, "a[href*='/fast_download/']", infoUrl);
+                if (fastUrl != null)
                 {
-                    var href = fastMatch.Value;
-                    var resolved = new Uri(new Uri(infoUrl), href).AbsoluteUri;
-                    _logger.Debug("Browser resolved fast download URL: {0}", Redact(resolved));
+                    _logger.Debug("Browser resolved fast download URL: {0}", Redact(fastUrl));
                     await CloseAsync(browser, playwright);
-                    return resolved;
+                    return fastUrl;
                 }
 
-                var fileMatch = DirectFileRegex.Match(content);
-                if (fileMatch.Success)
+                var directFileUrl = await GetFirstDirectBookFileUrlAsync(page, infoUrl);
+                if (directFileUrl != null)
                 {
-                    _logger.Debug("Browser resolved direct file URL: {0}", Redact(fileMatch.Value));
+                    _logger.Debug("Browser resolved direct file URL: {0}", Redact(directFileUrl));
                     await CloseAsync(browser, playwright);
-                    return fileMatch.Value;
+                    return directFileUrl;
                 }
 
                 _logger.Debug("Browser could not find any download link on {0}", infoUrl);
@@ -161,6 +151,53 @@ namespace NzbDrone.Core.Download.Clients.Direct
             {
                 // Swallow cleanup errors
             }
+        }
+
+        private static async Task<string> GetFirstHttpLinkAsync(Microsoft.Playwright.IPage page, string selector, string infoUrl)
+        {
+            var links = page.Locator(selector);
+            var count = await links.CountAsync();
+
+            for (var index = 0; index < count; index++)
+            {
+                var href = await links.Nth(index).GetAttributeAsync("href");
+                if (TryResolveHttpUri(infoUrl, href, out var uri))
+                {
+                    return uri.AbsoluteUri;
+                }
+            }
+
+            return null;
+        }
+
+        private static async Task<string> GetFirstDirectBookFileUrlAsync(Microsoft.Playwright.IPage page, string infoUrl)
+        {
+            var links = page.Locator("a[href]");
+            var count = await links.CountAsync();
+
+            for (var index = 0; index < count; index++)
+            {
+                var href = await links.Nth(index).GetAttributeAsync("href");
+                if (TryResolveHttpUri(infoUrl, href, out var uri) && DirectBookFileExtensions.Contains(Path.GetExtension(uri.AbsolutePath)))
+                {
+                    return uri.AbsoluteUri;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool TryResolveHttpUri(string infoUrl, string href, out Uri uri)
+        {
+            uri = null;
+            if (href.IsNullOrWhiteSpace() || !Uri.TryCreate(new Uri(infoUrl), href, out var resolved) ||
+                (resolved.Scheme != Uri.UriSchemeHttp && resolved.Scheme != Uri.UriSchemeHttps))
+            {
+                return false;
+            }
+
+            uri = resolved;
+            return true;
         }
 
         private static string Redact(string url)

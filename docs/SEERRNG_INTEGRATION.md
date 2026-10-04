@@ -6,6 +6,10 @@ API shape. The integration capability contract is available at
 dialect, format-scoped routes, paged library endpoint, edition identity rules,
 pending author-import support, and restricted-key support.
 
+For a broader overview of maintained behavior beyond the shared Chaptarr base,
+see [ChaptarrNG fork changes](./FORK_FEATURES.md). This guide focuses on
+connecting SeerrNG and the service-key permissions.
+
 ## Configure a dedicated service key
 
 ChaptarrNG `0.9.941` and later can use a dedicated credential for SeerrNG.

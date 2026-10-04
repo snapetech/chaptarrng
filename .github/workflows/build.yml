@@ -185,9 +185,8 @@ jobs:
     - name: Build
       run: dotnet build src/Chaptarr.NoTests.sln --configuration Release --no-restore
 
-    - name: Build test assembly for Playwright browser setup
-      if: runner.os == 'Linux'
-      run: dotnet build src/Chaptarr.Core.Test/Chaptarr.Core.Test.csproj --configuration Release --no-restore
+    - name: Build test assembly
+      run: dotnet build src/Chaptarr.Core.Test/Chaptarr.Core.Test.csproj --configuration Release --no-restore -p:UseSharedCompilation=false
 
     - name: Install Chromium for direct-download browser tests
       if: runner.os == 'Linux'
@@ -196,7 +195,7 @@ jobs:
     - name: Test
       env:
         DIRECT_DOWNLOAD_REQUIRE_PLAYWRIGHT: ${{ runner.os == 'Linux' && 'true' || 'false' }}
-      run: dotnet test src/Chaptarr.Core.Test/Chaptarr.Core.Test.csproj --configuration Release --no-restore --verbosity normal
+      run: dotnet test src/Chaptarr.Core.Test/Chaptarr.Core.Test.csproj --configuration Release --no-restore --no-build --verbosity normal
     
     - name: Publish
       run: |

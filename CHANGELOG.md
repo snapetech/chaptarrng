@@ -23,7 +23,7 @@ history grouped from conventional commits.
 ### Maintenance
 - Use Snapetech Ko-fi support link - ([756e012](https://github.com/snapetech/chaptarrng/commit/756e012b264ef4faf3591f539afb1888b51e1677))
 
-## [0.9.940](https://github.com/snapetech/chaptarrng/compare/v0.9.940..v0.9.940) - 2026-10-04
+## [0.9.940](https://github.com/snapetech/chaptarrng/compare/v0.9.939..v0.9.940) - 2026-10-04
 
 ### User-facing changes
 
@@ -40,15 +40,19 @@ history grouped from conventional commits.
 - **Backups:** Full backups can now be stored as authenticated encrypted archives when a backup passphrase is configured, while existing ZIP backups remain restorable.
   - **Action required:** Mount a secret file containing a long random passphrase and set CHAPTARR_BACKUP_ENCRYPTION_KEY_FILE to its in-container path. Protect or remove existing plain ZIP backups separately.
 
-### Maintenance
-- Use Snapetech Ko-fi support link - ([756e012](https://github.com/snapetech/chaptarrng/commit/756e012b264ef4faf3591f539afb1888b51e1677))
-## [0.9.940](https://github.com/snapetech/chaptarrng/compare/v0.9.939..v0.9.940) - 2026-10-04
-
 ### Features
+
 - Add SeerrNG capability discovery and encrypted backups - ([865e0b1](https://github.com/snapetech/chaptarrng/commit/865e0b14b6b26a4eeda8d8ce381d94ed4dba4346))
 
 ### Bug Fixes
-- *(ci)* Rely on repository default CodeQL setup - ([319bceb](https://github.com/snapetech/chaptarrng/commit/319bcebbb3ec43b4558c737a8bcb9fd77ddea31c))## [0.9.939](https://github.com/snapetech/chaptarrng/compare/v0.9.938..v0.9.939) - 2026-10-01
+
+- *(ci)* Rely on repository default CodeQL setup - ([319bceb](https://github.com/snapetech/chaptarrng/commit/319bcebbb3ec43b4558c737a8bcb9fd77ddea31c))
+
+### Maintenance
+
+- Use Snapetech Ko-fi support link - ([756e012](https://github.com/snapetech/chaptarrng/commit/756e012b264ef4faf3591f539afb1888b51e1677))
+
+## [0.9.939](https://github.com/snapetech/chaptarrng/compare/v0.9.938..v0.9.939) - 2026-10-01
 
 ### User-facing changes
 

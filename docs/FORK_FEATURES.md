@@ -2,8 +2,10 @@
 
 ChaptarrNG is Snapetech's maintained fork of
 [Chaptarr](https://github.com/Chaptarr/chaptarr), which is itself derived from
-Readarr. This page summarizes the main user and operator changes carried in
-ChaptarrNG. It groups related changes rather than listing every fix and
+Readarr. The repositories share history through the
+[Chaptarr base commit](https://github.com/Chaptarr/chaptarr/commit/e9a28ed8d40d9f0858d7dd1992baba83c20773bb).
+This page summarizes the main user and operator changes carried in ChaptarrNG
+since that base. It groups related changes rather than listing every fix and
 dependency update; the [changelog](../CHANGELOG.md) records changes by release,
 and the [repository history](https://github.com/snapetech/chaptarrng/commits/main/)
 contains the commit-level record.
@@ -45,6 +47,20 @@ Setup and behavior:
 - [API identity and lifecycle contract](./API_IDENTITY_AND_LIFECYCLE.md)
 - [SeerrNG Bookshelf backend guide](https://github.com/snapetech/seerrng/blob/main/docs/using-seerr/bookshelf-backend.md)
 
+## Library identity and file organization
+
+The API distinguishes durable provider identities from local database IDs and
+can return the provider IDs associated with a book. When a mutation cannot
+choose safely between multiple matching rows, Chaptarr reports the ambiguity
+instead of silently changing a different book. The integration contract also
+preserves the requested ebook or audiobook format during lookups and searches.
+
+File-organization previews identify the exact file rows selected for a move or
+retag. Author-folder moves use Chaptarr's stored author paths, and moving files
+to a canonical author folder is opt-in. The [API identity and lifecycle
+contract](./API_IDENTITY_AND_LIFECYCLE.md) documents identity, match evidence,
+pending imports, and organize-preview fields.
+
 ## Direct ebook downloads
 
 The optional Direct Download indexer searches configured ebook sources by ISBN
@@ -80,11 +96,14 @@ See [Direct Download source setup](../README.md#direct-download-sources) for the
 
 ## Backups and service security
 
-Full backup archives can use authenticated encryption when
+Quickstart Settings Backups support optional passphrase encryption. Full
+backup archives can use authenticated encryption when
 `CHAPTARR_BACKUP_ENCRYPTION_KEY_FILE` points to a mounted secret containing a
-strong passphrase. Existing ZIP backups remain restorable, but enabling
-encryption does not convert them. Keep the decryption secret outside the backup
-and retain it for as long as encrypted archives must remain recoverable.
+strong passphrase.
+
+Existing ZIP backups remain restorable, but enabling full-backup encryption
+does not convert them. Keep the decryption secret outside the backup and retain
+it for as long as encrypted archives must remain recoverable.
 
 The fork also maintains API-key handling and response redaction, login
 throttling, request security headers, image-proxy target validation, and

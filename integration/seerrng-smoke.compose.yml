@@ -1,0 +1,32 @@
+services:
+  chaptarrng:
+    image: chaptarrng-seerrng-smoke:local
+    build:
+      context: ..
+      dockerfile: Dockerfile.build
+    environment:
+      CHAPTARR__AUTH__APIKEY: ${CHAPTARR_GLOBAL_API_KEY:?Set CHAPTARR_GLOBAL_API_KEY}
+      CHAPTARR__AUTH__SEERRAPIKEY: ${CHAPTARR_SEERR_API_KEY:?Set CHAPTARR_SEERR_API_KEY}
+    volumes:
+      - chaptarrng-smoke-config:/config
+
+  smoke:
+    image: node:24.15.0-bookworm-slim
+    working_dir: /seerrng
+    depends_on:
+      - chaptarrng
+    environment:
+      CHAPTARR_API_URL: http://chaptarrng:8789/api/v1
+      CHAPTARR_GLOBAL_API_KEY: ${CHAPTARR_GLOBAL_API_KEY:?Set CHAPTARR_GLOBAL_API_KEY}
+      CHAPTARR_SEERR_API_KEY: ${CHAPTARR_SEERR_API_KEY:?Set CHAPTARR_SEERR_API_KEY}
+      CONFIG_DIRECTORY: /tmp/seerrng-smoke-config
+      SEERR_EXTERNAL_CONFIG: '{"clientId":"integration-smoke","main":{},"plex":{},"jellyfin":{},"oidc":{},"tautulli":{},"notifications":{"agents":{}},"network":{},"radarr":[],"sonarr":[],"lidarr":[],"readarr":[]}'
+    volumes:
+      - type: bind
+        source: ${SEERRNG_SOURCE:?Set SEERRNG_SOURCE to the SeerrNG checkout}
+        target: /seerrng
+        read_only: true
+    command: [node, scripts/chaptarrng-integration-smoke.mjs]
+
+volumes:
+  chaptarrng-smoke-config:

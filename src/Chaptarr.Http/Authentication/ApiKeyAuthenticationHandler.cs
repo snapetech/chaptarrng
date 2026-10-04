@@ -28,6 +28,7 @@ namespace Chaptarr.Http.Authentication
     {
         private readonly string _apiKey;
         private readonly byte[] _apiKeyBytes;
+        private readonly byte[] _seerrApiKeyBytes;
 
         public ApiKeyAuthenticationHandler(IOptionsMonitor<ApiKeyAuthenticationOptions> options,
             ILoggerFactory logger,
@@ -37,6 +38,7 @@ namespace Chaptarr.Http.Authentication
         {
             _apiKey = config.ApiKey;
             _apiKeyBytes = Encoding.UTF8.GetBytes(_apiKey ?? string.Empty);
+            _seerrApiKeyBytes = Encoding.UTF8.GetBytes(config.SeerrApiKey ?? string.Empty);
         }
 
         private string ParseApiKey()
@@ -77,33 +79,50 @@ namespace Chaptarr.Http.Authentication
             return null;
         }
 
-        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             var providedApiKey = ParseApiKey();
 
             if (string.IsNullOrWhiteSpace(providedApiKey))
             {
-                return Task.FromResult(AuthenticateResult.NoResult());
+                return AuthenticateResult.NoResult();
             }
 
             var providedBytes = Encoding.UTF8.GetBytes(providedApiKey);
             if (providedBytes.Length == _apiKeyBytes.Length &&
                 CryptographicOperations.FixedTimeEquals(providedBytes, _apiKeyBytes))
             {
-                var claims = new List<Claim>
-                {
-                    new Claim("ApiKey", "true")
-                };
-
-                var identity = new ClaimsIdentity(claims, Options.AuthenticationType);
-                var identities = new List<ClaimsIdentity> { identity };
-                var principal = new ClaimsPrincipal(identities);
-                var ticket = new AuthenticationTicket(principal, Options.Scheme);
-
-                return Task.FromResult(AuthenticateResult.Success(ticket));
+                return CreateSuccess("full");
             }
 
-            return Task.FromResult(AuthenticateResult.NoResult());
+            if (_seerrApiKeyBytes.Length > 0 &&
+                providedBytes.Length == _seerrApiKeyBytes.Length &&
+                CryptographicOperations.FixedTimeEquals(providedBytes, _seerrApiKeyBytes))
+            {
+                if (!await SeerrApiKeyAccessPolicy.IsAllowedAsync(Request))
+                {
+                    return AuthenticateResult.Fail("The SeerrNG service credential cannot access this endpoint.");
+                }
+
+                return CreateSuccess("seerrng");
+            }
+
+            return AuthenticateResult.NoResult();
+        }
+
+        private AuthenticateResult CreateSuccess(string scope)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim("ApiKey", "true"),
+                new Claim("ApiKeyScope", scope)
+            };
+
+            var identity = new ClaimsIdentity(claims, Options.AuthenticationType);
+            var principal = new ClaimsPrincipal(new List<ClaimsIdentity> { identity });
+            var ticket = new AuthenticationTicket(principal, Options.Scheme);
+
+            return AuthenticateResult.Success(ticket);
         }
 
         protected override Task HandleChallengeAsync(AuthenticationProperties properties)

@@ -20180,6 +20180,9 @@
           },
           "pendingImportCancellation": {
             "type": "boolean"
+          },
+          "restrictedServiceApiKey": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

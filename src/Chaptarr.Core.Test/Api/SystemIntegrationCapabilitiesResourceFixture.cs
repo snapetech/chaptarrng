@@ -22,6 +22,7 @@ namespace Chaptarr.Core.Test.Api
             Assert.That(resource.Features.FormatScopedFacade, Is.True);
             Assert.That(resource.Features.PendingAuthorImports, Is.True);
             Assert.That(resource.Features.PendingImportCancellation, Is.True);
+            Assert.That(resource.Features.RestrictedServiceApiKey, Is.True);
         }
     }
 }

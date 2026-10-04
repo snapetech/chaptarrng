@@ -56,6 +56,7 @@ namespace NzbDrone.Core.Configuration
         string SyslogServer { get; }
         int SyslogPort { get; }
         string SyslogLevel { get; }
+        string SeerrApiKey { get; }
         string Theme { get; }
         string PostgresHost { get; }
         int PostgresPort { get; }
@@ -205,6 +206,8 @@ namespace NzbDrone.Core.Configuration
                 return apiKey;
             }
         }
+
+        public string SeerrApiKey => _authOptions.SeerrApiKey?.Trim();
 
         public AuthenticationType ConfiguredAuthenticationMethod
         {

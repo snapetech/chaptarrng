@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Reflection;
 using NUnit.Framework;
@@ -33,7 +34,7 @@ namespace Chaptarr.Core.Test.Configuration
 
             var normalizedRoot = InvokeNormalizeAndValidateRoot(service, "/downloads/direct-download-backups");
 
-            Assert.That(normalizedRoot, Is.EqualTo("/downloads/direct-download-backups"));
+            Assert.That(normalizedRoot, Is.EqualTo(Path.GetFullPath("/downloads/direct-download-backups")));
         }
 
         [Test]
@@ -56,7 +57,7 @@ namespace Chaptarr.Core.Test.Configuration
                 service,
                 "/srv/direct-download-restore/session/direct.chaptarr-settings-backup.json");
 
-            Assert.That(normalizedFilePath, Is.EqualTo("/srv/direct-download-restore/session/direct.chaptarr-settings-backup.json"));
+            Assert.That(normalizedFilePath, Is.EqualTo(Path.GetFullPath("/srv/direct-download-restore/session/direct.chaptarr-settings-backup.json")));
         }
 
         [Test]

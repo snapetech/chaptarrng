@@ -745,6 +745,11 @@ namespace Chaptarr.Core.Test.Download
                         return;
                     }
 
+                    if (item?.Status == DownloadItemStatus.Failed && status != DownloadItemStatus.Failed)
+                    {
+                        Assert.Fail($"Download {downloadId} failed before reaching {status}: {item.Message}");
+                    }
+
                     _ = client.GetItems();
                     await Task.Delay(50);
                 }

@@ -86,8 +86,8 @@ namespace NzbDrone.Core.Download.Clients.Direct
             long persistedBytes = 0;
             long lastPersistedBytes = 0;
 
-            await using var fileStream = _diskProvider.OpenWriteStream(state.PartFilePath);
-            await using var progressStream = new DirectDownloadProgressStream(fileStream, bytes =>
+            await using (var fileStream = _diskProvider.OpenWriteStream(state.PartFilePath))
+            await using (var progressStream = new DirectDownloadProgressStream(fileStream, bytes =>
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 persistedBytes = bytes;
@@ -99,24 +99,26 @@ namespace NzbDrone.Core.Download.Clients.Direct
                 lastPersistedBytes = bytes;
                 state.DownloadedBytes = bytes;
                 _stateStore.Save(Settings.StagingFolder, Definition.Id, state);
-            });
-
-            var request = new HttpRequest(effectiveUrl)
+            }))
             {
-                AllowAutoRedirect = true,
-                RequestTimeout = TimeSpan.FromMinutes(2),
-                ResponseStream = progressStream,
-                CancellationToken = cancellationToken
-            };
+                var request = new HttpRequest(effectiveUrl)
+                {
+                    AllowAutoRedirect = true,
+                    RequestTimeout = TimeSpan.FromMinutes(2),
+                    ResponseStream = progressStream,
+                    CancellationToken = cancellationToken
+                };
 
-            var response = await _httpClient.GetAsync(request);
-            if (response.Headers.ContentType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                var classification = ClassifyHtmlResponse(response);
-                throw new DownloadClientException($"Direct source returned HTML ({classification}) instead of a downloadable file.");
+                var response = await _httpClient.GetAsync(request);
+                if (response.Headers.ContentType?.Contains("text/html", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    var classification = ClassifyHtmlResponse(response);
+                    throw new DownloadClientException($"Direct source returned HTML ({classification}) instead of a downloadable file.");
+                }
+
+                cancellationToken.ThrowIfCancellationRequested();
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
             state.DownloadedBytes = Math.Max(persistedBytes, _diskProvider.GetFileSize(state.PartFilePath));
             if (state.DownloadedBytes <= 0)
             {

@@ -14,6 +14,15 @@ namespace Chaptarr.Core.Test.Download.DirectDownload
     [Category("Playwright")]
     public class DirectDownloadPlaywrightBrowserFixture
     {
+        [SetUp]
+        public void RequireExplicitBrowserTestOptIn()
+        {
+            if (!string.Equals(Environment.GetEnvironmentVariable("DIRECT_DOWNLOAD_REQUIRE_PLAYWRIGHT"), "true", StringComparison.OrdinalIgnoreCase))
+            {
+                Assert.Ignore("Set DIRECT_DOWNLOAD_REQUIRE_PLAYWRIGHT=true to run the headless Chromium integration tests.");
+            }
+        }
+
         [Test]
         public async Task should_resolve_javascript_rendered_slow_link_with_headless_chromium()
         {

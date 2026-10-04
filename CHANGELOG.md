@@ -4,6 +4,25 @@ ChaptarrNG release notes highlight user-facing changes and operating guidance.
 Each release combines curated entries from release-notes/ with technical
 history grouped from conventional commits.
 
+## [0.9.941](https://github.com/snapetech/chaptarrng/compare/v0.9.940..v0.9.941) - 2026-10-04
+
+### User-facing changes
+
+#### Changed
+
+- **Donations:** The Donations page now directs Ko-fi contributions to the Snapetech fork maintainer, clearly separating this fork from upstream Chaptarr.
+
+#### Security
+
+- **Integrations:** ChaptarrNG now supports a SeerrNG-specific service key that is limited to book requests, searches, library status, and pending author imports while keeping the normal API key available for full administrative access.
+  - **Action required:** Configure a separate CHAPTARR__AUTH__SEERRAPIKEY value in the ChaptarrNG container and enter that value in SeerrNG's Bookshelf service settings.
+
+### Features
+- Add restricted SeerrNG service API key - ([113c5ff](https://github.com/snapetech/chaptarrng/commit/113c5ff4e4bf02b1e4bdf9ea857b62e632af592a))
+
+### Maintenance
+- Use Snapetech Ko-fi support link - ([756e012](https://github.com/snapetech/chaptarrng/commit/756e012b264ef4faf3591f539afb1888b51e1677))
+
 ## [0.9.940](https://github.com/snapetech/chaptarrng/compare/v0.9.940..v0.9.940) - 2026-10-04
 
 ### User-facing changes

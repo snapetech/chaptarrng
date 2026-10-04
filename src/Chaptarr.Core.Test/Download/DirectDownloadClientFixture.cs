@@ -90,10 +90,18 @@ namespace Chaptarr.Core.Test.Download
         public async Task should_leave_failed_partial_data_until_remove_item_decides_whether_to_delete_it()
         {
             using var scenario = new DirectDownloadClientScenario();
+            var attempts = 0;
+            var recoveryEnabled = false;
             scenario.Transport.AddRoute(
                 url => url == "https://downloads.example/dune.epub",
                 async request =>
                 {
+                    attempts++;
+                    if (recoveryEnabled)
+                    {
+                        return await scenario.WriteBinaryResponse(request, "application/epub+zip", "recovered-body");
+                    }
+
                     var bytes = System.Text.Encoding.UTF8.GetBytes("partial-body");
                     await request.ResponseStream.WriteAsync(bytes, 0, bytes.Length);
                     throw new WebException("connection reset", WebExceptionStatus.ReceiveFailure);
@@ -106,13 +114,23 @@ namespace Chaptarr.Core.Test.Download
 
             var failedItem = scenario.SingleItem(client, downloadId);
             Assert.That(File.Exists(failedItem.OutputPath.FullPath), Is.True, "failed downloads should preserve their exact partial path until cleanup policy runs");
+            Assert.That(File.ReadAllText(failedItem.OutputPath.FullPath), Is.EqualTo("partial-body"));
 
             client.RemoveItem(failedItem, deleteData: false);
             Assert.That(File.Exists(failedItem.OutputPath.FullPath), Is.True);
+            var attemptsBeforeRecovery = attempts;
+            recoveryEnabled = true;
 
             var secondClient = scenario.BuildClient();
             var redownloadId = await secondClient.Download(BuildRemoteBook("https://downloads.example/dune.epub"), indexer: null);
             Assert.That(redownloadId, Is.EqualTo(downloadId));
+
+            await scenario.WaitForStatus(secondClient, redownloadId, DownloadItemStatus.Completed);
+
+            var redownloadedItem = scenario.SingleItem(secondClient, redownloadId);
+            Assert.That(attempts, Is.EqualTo(attemptsBeforeRecovery + 1));
+            Assert.That(File.ReadAllText(redownloadedItem.OutputPath.FullPath), Is.EqualTo("recovered-body"));
+            Assert.That(File.Exists(redownloadedItem.OutputPath.FullPath + ".part"), Is.False);
         }
 
         [Test]

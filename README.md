@@ -48,7 +48,9 @@ See the [SeerrNG Bookshelf backend guide](https://github.com/snapetech/seerrng/b
 
 ### Audiobooks
 * **Narrator Aware** - Can help recognize and organize your books with narrator info
-* **Multi-Edition Support** - Keep both audiobook and eBook versions of the same title
+* **Format-scoped books and requests** - Track ebook and audiobook records
+  separately while one ChaptarrNG instance serves both; SeerrNG can route
+  each request to its matching format
 * **Publisher Aware** - Special handling for dramatized audiobooks and multi-part releases
 * **Audio Formats** - Handles M4B, MP3 chapters, and multi-file audiobooks
 * **MP3 → M4B Conversion** - Optionally convert MP3 audiobooks into a single chaptered M4B, with chapter preservation or insertion if missing (powered by [m4b-tool](https://github.com/sandreas/m4b-tool))
@@ -150,8 +152,10 @@ provide a file URL, the optional slow-download browser fallback can resolve a
 link in a headless browser during the background transfer. Browser fallback
 can take longer than an API grab. Direct Download is built in; it does not
 require qBittorrent, Transmission, or another external download client.
-The official Docker image includes the Playwright Chromium runtime; a custom
-image must include a matching browser runtime for this fallback to work.
+The official Docker image includes the Playwright Chromium runtime on AMD64
+and ARM64. ARMv7 images omit Chromium, so browser fallback is unavailable on
+ARMv7; API-key-resolved downloads still work there. A custom image must include
+a matching browser runtime for browser fallback to work.
 
 The built-in client reports transfer progress and keeps its state and staged
 files across restarts. Once a supported ebook file is complete, Chaptarr can

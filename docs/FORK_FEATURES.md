@@ -2,13 +2,18 @@
 
 ChaptarrNG is Snapetech's maintained fork of
 [Chaptarr](https://github.com/Chaptarr/chaptarr), which is itself derived from
-Readarr. The repositories share history through the
-[Chaptarr base commit](https://github.com/Chaptarr/chaptarr/commit/e9a28ed8d40d9f0858d7dd1992baba83c20773bb).
+Readarr. The fork was created on August 31, 2026 from the parent repository's
+`develop` branch at the
+[shared fork-base commit](https://github.com/Chaptarr/chaptarr/commit/423b1bba1d47657d24ddfbf9c5418892972a1229).
 This page summarizes the main user and operator changes carried in ChaptarrNG
-since that base. It groups related changes rather than listing every fix and
-dependency update; the [changelog](../CHANGELOG.md) records changes by release,
-and the [repository history](https://github.com/snapetech/chaptarrng/commits/main/)
-contains the commit-level record.
+through the published
+[`v0.9.942` release](https://github.com/snapetech/chaptarrng/releases/tag/v0.9.942).
+It groups related changes rather than listing every fix and dependency update;
+the [changelog](../CHANGELOG.md) records changes by release, and the
+[repository history](https://github.com/snapetech/chaptarrng/commits/main/)
+contains the commit-level record. ChaptarrNG and upstream have continued to
+evolve independently since the fork; this guide describes the fork's changes,
+not a claim that every later upstream `develop` commit is included.
 
 The application keeps reporting its name as `Chaptarr` through its
 Readarr-compatible API so existing clients can identify it. **ChaptarrNG**
@@ -77,9 +82,11 @@ browser-assisted grab may take longer. The API key is checked during the
 indexer's Test action without requesting a real file.
 
 The official Docker image includes the Playwright Chromium runtime needed for
-browser fallback. A custom image must include a compatible Playwright browser
-runtime. The fallback is optional; a source with a working API-key download
-does not need it.
+browser fallback on AMD64 and ARM64. ARMv7 images omit Chromium, so browser
+fallback is unavailable there; API-key-resolved downloads remain available. A
+custom image must include a compatible Playwright browser runtime. The
+fallback is optional; a source with a working API-key download does not need
+it.
 
 Direct Download requires a persistent staging folder. Its download state and
 files survive application restarts, and operators can inspect progress, retry
@@ -124,9 +131,10 @@ instructions for supported architectures, paths, and upgrade steps.
 
 ## Release history
 
-The current [changelog](../CHANGELOG.md) includes the maintained release line
-beginning with `0.9.936`. It covers the format-scoped request and pending-import
-work, fork identity and Unraid distribution, format-preserving lookups,
-YunoHost packaging, capability discovery, encrypted backups, and the
-restricted SeerrNG service key. Newer feature work is recorded in the next
-release's notes before publication.
+The [changelog](../CHANGELOG.md) records the maintained release line from
+`0.9.936` through `0.9.942`: format-scoped requests and pending imports, fork
+identity and Unraid distribution, format-preserving lookups, YunoHost
+packaging, capability discovery, encrypted backups, the restricted SeerrNG
+service key, and the Direct Download indexer/client with browser-assisted
+fallback. The `v0.9.942` container includes headless Chromium on AMD64 and
+ARM64; ARMv7 retains API-key downloads without browser fallback.

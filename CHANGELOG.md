@@ -4,6 +4,35 @@ ChaptarrNG release notes highlight user-facing changes and operating guidance.
 Each release combines curated entries from release-notes/ with technical
 history grouped from conventional commits.
 
+## [0.9.942](https://github.com/snapetech/chaptarrng/compare/v0.9.941..v0.9.942) - 2026-10-05
+
+### User-facing changes
+
+#### Added
+
+- **Indexers:** Configure prioritized ebook download sources with API-key grabs and browser-assisted fallback. Chaptarr tracks transfer progress and imports supported book files directly, without requiring a separate download client.
+
+#### Changed
+
+- **Documentation:** The README and fork guide now map ChaptarrNG's format-aware request lifecycle, Direct Download flow, backup protection, and maintained packages to their setup and API references.
+
+### Bug Fixes
+- Serialize direct download state persistence - ([521627e](https://github.com/snapetech/chaptarrng/commit/521627e29271197a3bc9b8a8df6fa7385d5f8b26))
+- Wait for direct download cancellation cleanup - ([0aef210](https://github.com/snapetech/chaptarrng/commit/0aef210ca377f5d105b466bd9df0da0fb1943d1e))
+- Close download stream before promoting staged file - ([13c1b65](https://github.com/snapetech/chaptarrng/commit/13c1b653882ea19850234cbd85f33a35038efd6a))
+- Harden browser-assisted direct downloads - ([17ef911](https://github.com/snapetech/chaptarrng/commit/17ef9119ebbb69bf7c1cdd1912a1a378b6d57903))
+
+### Documentation
+- Complete fork feature history - ([4833664](https://github.com/snapetech/chaptarrng/commit/4833664364ccdbf54dbcf5e8fe76f55d22f85e9b))
+- Format fork feature guide - ([c38b23a](https://github.com/snapetech/chaptarrng/commit/c38b23ad5d2ea50c1423016822bcf5c38daa7420))
+
+### Testing
+- Await direct download redownload before cleanup - ([472cded](https://github.com/snapetech/chaptarrng/commit/472cdedbf676e619128d9eb088a57b5c638f78e5))
+- Gate Playwright browser fixtures explicitly - ([4519bbf](https://github.com/snapetech/chaptarrng/commit/4519bbfd61b692cb14b2413402e7c1e70882f9aa))
+
+### Maintenance
+- Isolate test assembly compilation - ([cbee1cb](https://github.com/snapetech/chaptarrng/commit/cbee1cb10dd38b142f0f5d845f7af9ef4c2de8d6))
+
 ## [0.9.941](https://github.com/snapetech/chaptarrng/compare/v0.9.940..v0.9.941) - 2026-10-04
 
 ### User-facing changes

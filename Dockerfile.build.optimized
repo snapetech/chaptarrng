@@ -68,7 +68,7 @@ RUN mkdir -p /app/UI && cp -r _output/UI/* /app/UI/
 RUN test -s /app/UI/index.html
 
 ###### runtime stage ######
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet@sha256:0fa044f682cb7d93a5a90401a00c626c66f7b00b86922be9441f869eae039f80
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet@sha256:222759b391a1aaf241166672c8f99b2d4ada452e7b5319f3c6e8f265a37b5ad4
 # Copy Playwright Chromium from the browser stage
 COPY --from=browser /ms-playwright /ms-playwright
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright

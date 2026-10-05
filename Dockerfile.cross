@@ -10,8 +10,14 @@ RUN npm install -g yarn@1.22.22 --force
 
 ###### browser stage ######
 FROM node:20.11.1-bookworm-slim AS browser
+ARG TARGETARCH
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx --yes playwright@1.63.0 install --with-deps chromium
+RUN mkdir -p "$PLAYWRIGHT_BROWSERS_PATH"; \
+    case "$TARGETARCH" in \
+        amd64|arm64) npx --yes playwright@1.63.0 install --only-shell chromium ;; \
+        arm) echo "Playwright Chromium is unavailable for linux/arm/v7; browser-assisted fallback will be unavailable on this image." ;; \
+        *) echo "Unsupported architecture for Playwright Chromium: $TARGETARCH" && exit 1 ;; \
+    esac
 
 ###### mp4v2 stage ######
 FROM --platform=$TARGETPLATFORM sandreas/mp4v2:2.1.1@sha256:c186cccc63b69a428be6a60359c29aff84bfacbd8597a4237038c7ccd7628a2d AS mp4v2

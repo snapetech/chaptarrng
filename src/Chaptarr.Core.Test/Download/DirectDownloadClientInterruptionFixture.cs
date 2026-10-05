@@ -53,6 +53,8 @@ namespace Chaptarr.Core.Test.Download
             await Task.WhenAny(requestCanceled.Task, Task.Delay(TimeSpan.FromSeconds(2)));
             Assert.That(requestCanceled.Task.IsCompleted, Is.True, "stalled request should observe client cancellation before timeout elapses");
             Assert.That(scenario.ContainsItem(client, downloadId), Is.False);
+            Assert.That(Directory.Exists(Path.Combine(scenario.StagingFolder, "client-42", downloadId)), Is.False,
+                "removing an active download should release and delete its staged data before returning");
         }
 
         [Test]

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Extensions;
@@ -50,7 +51,12 @@ namespace NzbDrone.Core.Download.Clients.Direct
             }
         }
 
-        public async Task<string> TryResolveSlowDownloadUrlAsync(string infoUrl)
+        public Task<string> TryResolveSlowDownloadUrlAsync(string infoUrl)
+        {
+            return TryResolveSlowDownloadUrlAsync(infoUrl, CancellationToken.None);
+        }
+
+        public async Task<string> TryResolveSlowDownloadUrlAsync(string infoUrl, CancellationToken cancellationToken)
         {
             if (infoUrl.IsNullOrWhiteSpace())
             {
@@ -59,9 +65,17 @@ namespace NzbDrone.Core.Download.Clients.Direct
 
             Microsoft.Playwright.IPlaywright playwright = null;
             Microsoft.Playwright.IBrowser browser = null;
+            using var cancellationRegistration = cancellationToken.Register(() =>
+            {
+                if (browser != null)
+                {
+                    _ = CloseSafeAsync(browser, playwright);
+                }
+            });
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 playwright = await Microsoft.Playwright.Playwright.CreateAsync();
                 browser = await playwright.Chromium.LaunchAsync(new()
                 {
@@ -73,14 +87,17 @@ namespace NzbDrone.Core.Download.Clients.Direct
                         "--disable-dev-shm-usage"
                     }
                 });
+                cancellationToken.ThrowIfCancellationRequested();
 
                 var context = await browser.NewContextAsync(new()
                 {
                     UserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
                 });
+                cancellationToken.ThrowIfCancellationRequested();
 
                 var page = await context.NewPageAsync();
                 await page.GotoAsync(infoUrl, new() { Timeout = (float)NavigationTimeout.TotalMilliseconds, WaitUntil = Microsoft.Playwright.WaitUntilState.NetworkIdle });
+                cancellationToken.ThrowIfCancellationRequested();
 
                 // Wait for download links to appear (DDoS challenge may need JS execution)
                 try
@@ -91,8 +108,10 @@ namespace NzbDrone.Core.Download.Clients.Direct
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     _logger.Debug("Browser timed out or failed waiting for download links on {0}: {1}", Redact(infoUrl), ex.Message);
                 }
+                cancellationToken.ThrowIfCancellationRequested();
 
                 // Extract download URLs in priority order
                 var slowUrl = await GetFirstHttpLinkAsync(page, "a[href*='/slow_download/']", infoUrl);
@@ -125,8 +144,13 @@ namespace NzbDrone.Core.Download.Clients.Direct
             }
             catch (Exception ex)
             {
-                _logger.Warn(ex, "Browser download resolution failed for {0}: {1}", Redact(infoUrl), ex.Message);
                 await CloseSafeAsync(browser, playwright);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
+
+                _logger.Warn(ex, "Browser download resolution failed for {0}: {1}", Redact(infoUrl), ex.Message);
                 return null;
             }
         }

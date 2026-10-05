@@ -30,7 +30,7 @@ namespace Chaptarr.Core.Test.Download
 
             var item = scenario.SingleItem(client, downloadId);
             Assert.That(item.Status, Is.EqualTo(DownloadItemStatus.Completed));
-            Assert.That(item.OutputPath.FullPath, Is.EqualTo(Path.Combine(scenario.StagingFolder, $"client-42/{downloadId}/Frank Herbert - Dune [epub].epub")));
+            Assert.That(item.OutputPath.FullPath, Is.EqualTo(Path.Combine(scenario.StagingFolder, "client-42", downloadId, "Frank Herbert - Dune [epub].epub")));
             Assert.That(item.FilePaths, Is.EqualTo(new[] { item.OutputPath.FullPath }));
             Assert.That(item.FileListConfidence, Is.EqualTo(DownloadClientFileListConfidence.Authoritative));
             Assert.That(File.Exists(item.OutputPath.FullPath), Is.True);

@@ -20,8 +20,9 @@ namespace NzbDrone.Core.Download.Clients.Direct
 
     public partial class DirectDownloadClient
     {
-        private async Task DownloadInternalAsync(string downloadId, CancellationToken cancellationToken)
+        private async Task DownloadInternalAsync(string downloadId, ActiveDownload activeDownload)
         {
+            var cancellationToken = activeDownload.Token;
             try
             {
                 var state = _stateStore.Find(Settings.StagingFolder, Definition.Id, downloadId);
@@ -69,10 +70,8 @@ namespace NzbDrone.Core.Download.Clients.Direct
             }
             finally
             {
-                if (_activeDownloads.TryRemove(downloadId, out var cancellationTokenSource))
-                {
-                    cancellationTokenSource.Dispose();
-                }
+                _activeDownloads.TryRemove(downloadId, out _);
+                activeDownload.Complete();
             }
         }
 
@@ -81,7 +80,8 @@ namespace NzbDrone.Core.Download.Clients.Direct
             _diskProvider.EnsureFolder(state.OutputDirectory);
             DeleteIfPresent(state.PartFilePath);
 
-            var effectiveUrl = await ResolveEffectiveUrlAsync(state);
+            var effectiveUrl = await ResolveEffectiveUrlAsync(state, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             long persistedBytes = 0;
             long lastPersistedBytes = 0;
@@ -135,14 +135,14 @@ namespace NzbDrone.Core.Download.Clients.Direct
         /// is returned without overwriting the durable source, so restarts and
         /// retries always re-resolve from the stable original.
         /// </summary>
-        private async Task<string> ResolveEffectiveUrlAsync(DirectDownloadClientState state)
+        private async Task<string> ResolveEffectiveUrlAsync(DirectDownloadClientState state, CancellationToken cancellationToken)
         {
             if (state.FallbackMode != DirectDownloadFallbackMode.DeferredPlaywright)
             {
                 return state.DownloadUrl;
             }
 
-            var browserResolvedUrl = await _browserResolver.TryResolveSlowDownloadUrlAsync(state.DownloadUrl);
+            var browserResolvedUrl = await _browserResolver.TryResolveSlowDownloadUrlAsync(state.DownloadUrl, cancellationToken);
             if (browserResolvedUrl != null)
             {
                 _logger.Debug("Deferred Playwright resolved transient URL for '{0}'.", state.Title);

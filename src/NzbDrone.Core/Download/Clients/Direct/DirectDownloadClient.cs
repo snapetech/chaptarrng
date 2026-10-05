@@ -31,7 +31,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
         private readonly DirectDownloadClientStateStore _stateStore;
         private readonly DirectDownloadGrabUrlResolver _grabUrlResolver;
         private readonly IBrowserDownloadResolver _browserResolver;
-        private readonly ConcurrentDictionary<string, CancellationTokenSource> _activeDownloads = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, ActiveDownload> _activeDownloads = new(StringComparer.OrdinalIgnoreCase);
 
         public DirectDownloadClient(IHttpClient httpClient,
                                     IDiskProvider diskProvider,
@@ -186,10 +186,10 @@ namespace NzbDrone.Core.Download.Clients.Direct
                 return;
             }
 
-            if (_activeDownloads.TryRemove(item.DownloadId, out var cancellationTokenSource))
+            if (_activeDownloads.TryGetValue(item.DownloadId, out var activeDownload))
             {
-                cancellationTokenSource.Cancel();
-                cancellationTokenSource.Dispose();
+                activeDownload.Cancel();
+                activeDownload.Completion.Task.GetAwaiter().GetResult();
             }
 
             var state = _stateStore.Find(Settings.StagingFolder, Definition.Id, item.DownloadId);
@@ -249,14 +249,14 @@ namespace NzbDrone.Core.Download.Clients.Direct
                 return;
             }
 
-            var cancellationTokenSource = new CancellationTokenSource();
-            if (!_activeDownloads.TryAdd(downloadId, cancellationTokenSource))
+            var activeDownload = new ActiveDownload();
+            if (!_activeDownloads.TryAdd(downloadId, activeDownload))
             {
-                cancellationTokenSource.Dispose();
+                activeDownload.Dispose();
                 return;
             }
 
-            Task.Run(() => DownloadInternalAsync(downloadId, cancellationTokenSource.Token)).LogExceptions();
+            Task.Run(() => DownloadInternalAsync(downloadId, activeDownload)).LogExceptions();
         }
 
         private async Task<GrabResolution> TryResolveGrabAsync(string downloadUrl, string source, IIndexer indexer)
@@ -269,6 +269,38 @@ namespace NzbDrone.Core.Download.Clients.Direct
             var indexerSettings = indexer?.Definition?.Settings as DirectDownloadSettings;
             var apiKey = indexerSettings?.ApiKey;
             return await _grabUrlResolver.TryResolveGrabAsync(downloadUrl, apiKey, source);
+        }
+
+        private sealed class ActiveDownload
+        {
+            private readonly CancellationTokenSource _cancellationTokenSource = new();
+
+            public CancellationToken Token => _cancellationTokenSource.Token;
+            public TaskCompletionSource<bool> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            public void Cancel()
+            {
+                try
+                {
+                    _cancellationTokenSource.Cancel();
+                }
+                catch (ObjectDisposedException)
+                {
+                    // The download completed while the removal request was being processed.
+                }
+            }
+
+            public void Complete()
+            {
+                _cancellationTokenSource.Dispose();
+                Completion.TrySetResult(true);
+            }
+
+            public void Dispose()
+            {
+                _cancellationTokenSource.Dispose();
+                Completion.TrySetResult(true);
+            }
         }
 
     }

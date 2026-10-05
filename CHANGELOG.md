@@ -4,7 +4,7 @@ ChaptarrNG release notes highlight user-facing changes and operating guidance.
 Each release combines curated entries from release-notes/ with technical
 history grouped from conventional commits.
 
-## [0.9.942](https://github.com/snapetech/chaptarrng/compare/v0.9.941..v0.9.942) - 2026-10-05
+## [0.9.942](https://github.com/snapetech/chaptarrng/compare/v0.9.942..v0.9.942) - 2026-10-05
 
 ### User-facing changes
 
@@ -15,6 +15,14 @@ history grouped from conventional commits.
 #### Changed
 
 - **Documentation:** The README and fork guide now map ChaptarrNG's format-aware request lifecycle, Direct Download flow, backup protection, and maintained packages to their setup and API references.
+
+#### Fixed
+
+- **Container Image:** The container build now installs only Playwright's headless Chromium shell on AMD64 and ARM64, avoiding OS dependency detection under emulation. ARMv7 images omit Chromium, while API-resolved direct downloads remain available.
+
+### Bug Fixes
+- *(release)* Build headless browser images across architectures - ([298f33a](https://github.com/snapetech/chaptarrng/commit/298f33a32aaf4274a70ce2a3c54cbefcc3f08171))
+## [0.9.942](https://github.com/snapetech/chaptarrng/compare/v0.9.941..v0.9.942) - 2026-10-05
 
 ### Bug Fixes
 - Serialize direct download state persistence - ([521627e](https://github.com/snapetech/chaptarrng/commit/521627e29271197a3bc9b8a8df6fa7385d5f8b26))
@@ -31,9 +39,7 @@ history grouped from conventional commits.
 - Gate Playwright browser fixtures explicitly - ([4519bbf](https://github.com/snapetech/chaptarrng/commit/4519bbfd61b692cb14b2413402e7c1e70882f9aa))
 
 ### Maintenance
-- Isolate test assembly compilation - ([cbee1cb](https://github.com/snapetech/chaptarrng/commit/cbee1cb10dd38b142f0f5d845f7af9ef4c2de8d6))
-
-## [0.9.941](https://github.com/snapetech/chaptarrng/compare/v0.9.940..v0.9.941) - 2026-10-04
+- Isolate test assembly compilation - ([cbee1cb](https://github.com/snapetech/chaptarrng/commit/cbee1cb10dd38b142f0f5d845f7af9ef4c2de8d6))## [0.9.941](https://github.com/snapetech/chaptarrng/compare/v0.9.940..v0.9.941) - 2026-10-04
 
 ### User-facing changes
 

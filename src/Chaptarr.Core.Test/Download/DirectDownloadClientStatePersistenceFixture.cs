@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using NLog;
 using NUnit.Framework;
 using NzbDrone.Common.Disk;
@@ -405,6 +406,61 @@ namespace Chaptarr.Core.Test.Download
 
             Assert.That(state.ResolvedUrl, Is.EqualTo("https://cdn.example/repeat-resolved.epub"));
             Assert.That(state.FallbackMode, Is.EqualTo(DirectDownloadFallbackMode.DeferredPlaywright));
+        }
+
+        [Test]
+        public void should_serialize_concurrent_state_reads_and_writes_for_the_same_download()
+        {
+            var initialState = new DirectDownloadClientState
+            {
+                DownloadId = "concurrent-state",
+                Title = "Concurrent State",
+                DownloadUrl = "https://example.com/concurrent.epub",
+                Status = DownloadItemStatus.Downloading,
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow
+            };
+            _store.Save(_tempFolder, ClientId, initialState);
+
+            var operations = new Task[8];
+            for (var worker = 0; worker < 4; worker++)
+            {
+                var workerId = worker;
+                operations[worker] = Task.Run(() =>
+                {
+                    for (var iteration = 0; iteration < 100; iteration++)
+                    {
+                        _store.Save(_tempFolder, ClientId, new DirectDownloadClientState
+                        {
+                            DownloadId = "concurrent-state",
+                            Title = "Concurrent State",
+                            DownloadUrl = "https://example.com/concurrent.epub",
+                            Status = DownloadItemStatus.Downloading,
+                            DownloadedBytes = workerId * 100 + iteration,
+                            CreatedAtUtc = initialState.CreatedAtUtc,
+                            UpdatedAtUtc = DateTime.UtcNow
+                        });
+                    }
+                });
+            }
+
+            for (var worker = 4; worker < operations.Length; worker++)
+            {
+                operations[worker] = Task.Run(() =>
+                {
+                    for (var iteration = 0; iteration < 100; iteration++)
+                    {
+                        var state = _store.Find(_tempFolder, ClientId, "concurrent-state");
+                        if (state == null || state.DownloadId != "concurrent-state")
+                        {
+                            throw new InvalidDataException("A concurrent state read returned a missing or invalid download record.");
+                        }
+                    }
+                });
+            }
+
+            Assert.DoesNotThrow(() => Task.WaitAll(operations));
+            Assert.That(_store.Find(_tempFolder, ClientId, "concurrent-state"), Is.Not.Null);
         }
 
         [Test]

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
 
         private readonly IDiskProvider _diskProvider;
         private readonly Logger _logger;
+        private readonly ConcurrentDictionary<string, object> _stateFileLocks = new(StringComparer.OrdinalIgnoreCase);
 
         public DirectDownloadClientStateStore(IDiskProvider diskProvider, Logger logger)
         {
@@ -40,28 +42,31 @@ namespace NzbDrone.Core.Download.Clients.Direct
 
         public DirectDownloadClientState Load(string stateFilePath)
         {
-            if (!_diskProvider.FileExists(stateFilePath))
+            lock (GetStateFileLock(stateFilePath))
             {
-                return null;
-            }
+                if (!_diskProvider.FileExists(stateFilePath))
+                {
+                    return null;
+                }
 
-            string json;
-            try
-            {
-                json = _diskProvider.ReadAllText(stateFilePath);
-            }
-            catch (IOException)
-            {
-                return null;
-            }
+                string json;
+                try
+                {
+                    json = _diskProvider.ReadAllText(stateFilePath);
+                }
+                catch (IOException)
+                {
+                    return null;
+                }
 
-            if (!Json.TryDeserialize<DirectDownloadClientState>(json, out var state) || state == null)
-            {
-                _logger.Warn("Ignoring malformed Direct download state file '{0}'.", stateFilePath);
-                return null;
-            }
+                if (!Json.TryDeserialize<DirectDownloadClientState>(json, out var state) || state == null)
+                {
+                    _logger.Warn("Ignoring malformed Direct download state file '{0}'.", stateFilePath);
+                    return null;
+                }
 
-            return state;
+                return state;
+            }
         }
 
         public DirectDownloadClientState Find(string stagingFolder, int clientId, string downloadId)
@@ -72,17 +77,23 @@ namespace NzbDrone.Core.Download.Clients.Direct
         public void Save(string stagingFolder, int clientId, DirectDownloadClientState state)
         {
             var stateFilePath = GetStateFilePath(stagingFolder, clientId, state.DownloadId);
-            _diskProvider.EnsureFolder(Path.GetDirectoryName(stateFilePath));
-            state.UpdatedAtUtc = DateTime.UtcNow;
-            _diskProvider.WriteAllText(stateFilePath, state.ToJson());
+            lock (GetStateFileLock(stateFilePath))
+            {
+                _diskProvider.EnsureFolder(Path.GetDirectoryName(stateFilePath));
+                state.UpdatedAtUtc = DateTime.UtcNow;
+                _diskProvider.WriteAllText(stateFilePath, state.ToJson());
+            }
         }
 
         public void Delete(string stagingFolder, int clientId, string downloadId)
         {
             var stateFilePath = GetStateFilePath(stagingFolder, clientId, downloadId);
-            if (_diskProvider.FileExists(stateFilePath))
+            lock (GetStateFileLock(stateFilePath))
             {
-                _diskProvider.DeleteFile(stateFilePath);
+                if (_diskProvider.FileExists(stateFilePath))
+                {
+                    _diskProvider.DeleteFile(stateFilePath);
+                }
             }
         }
 
@@ -109,6 +120,11 @@ namespace NzbDrone.Core.Download.Clients.Direct
         private static string GetClientRoot(string stagingFolder, int clientId)
         {
             return Path.Combine(stagingFolder ?? string.Empty, $"client-{clientId}");
+        }
+
+        private object GetStateFileLock(string stateFilePath)
+        {
+            return _stateFileLocks.GetOrAdd(stateFilePath, _ => new object());
         }
     }
 }

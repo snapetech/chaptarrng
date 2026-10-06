@@ -21,12 +21,12 @@ namespace NzbDrone.Core.Validation.Paths
 
         protected override bool IsValid(NzbDronePropertyValidatorContext context)
         {
+            context.MessageFormatter.AppendArgument("path", context.PropertyValue?.ToString() ?? string.Empty);
+
             if (context.PropertyValue == null)
             {
                 return false;
             }
-
-            context.MessageFormatter.AppendArgument("path", context.PropertyValue.ToString());
 
             return context.PropertyValue.ToString().IsPathValid(PathValidationType.CurrentOs);
         }

@@ -29,6 +29,7 @@ namespace NzbDrone.Core.Books
         private readonly IAuthorService _authorService;
         private readonly IAuthorLibraryService _authorLibraryService;
         private readonly IBookService _bookService;
+        private readonly IBookMonitoredService _bookMonitoredService;
         private readonly IBookAddedService _bookAddedService;
         private readonly IProvideBookInfo _bookInfo;
         private readonly IImportListExclusionService _importListExclusionService;
@@ -46,6 +47,7 @@ namespace NzbDrone.Core.Books
         public AddBookService(IAuthorService authorService,
                                IAuthorLibraryService authorLibraryService,
                                IBookService bookService,
+                               IBookMonitoredService bookMonitoredService,
                                IBookAddedService bookAddedService,
                                IProvideBookInfo bookInfo,
                                IImportListExclusionService importListExclusionService,
@@ -63,6 +65,7 @@ namespace NzbDrone.Core.Books
             _authorService = authorService;
             _authorLibraryService = authorLibraryService;
             _bookService = bookService;
+            _bookMonitoredService = bookMonitoredService;
             _bookAddedService = bookAddedService;
             _bookInfo = bookInfo;
             _importListExclusionService = importListExclusionService;
@@ -174,12 +177,10 @@ namespace NzbDrone.Core.Books
                 // CRITICAL: Capture monitoring intent BEFORE replacing Author object
                 var monitorMode = book.Author?.AddOptions?.Monitor;
                 var bookMediaType = book.MediaType;
-                var isTriStateSelectedForExistingAuthorMediaType =
-                    (bookMediaType == BookMediaType.Audiobook && (book.Author?.AudiobookMonitorExisting ?? 0) == 2) ||
-                    (bookMediaType == BookMediaType.Ebook && (book.Author?.EbookMonitorExisting ?? 0) == 2);
                 var isSpecificBookIntentForExistingAuthor =
-                    monitorMode == MonitorTypes.SpecificBook ||
-                    isTriStateSelectedForExistingAuthorMediaType;
+                    monitorMode == MonitorTypes.SpecificBook;
+                var isAllBooksIntentForExistingAuthor =
+                    monitorMode == MonitorTypes.All;
                 
                 _logger.Debug("[SPECIFIC-BOOK-FIX] Captured monitoring intent BEFORE replacing Author: Monitor={0}, MediaType={1}",
                     monitorMode, bookMediaType);
@@ -197,8 +198,8 @@ namespace NzbDrone.Core.Books
                             dbAuthor,
                             requestedAuthorSettings.AudiobookQualityProfileId,
                             requestedAuthorSettings.AudiobookMetadataProfileId,
-                            requestedAuthorSettings.AudiobookMonitorExisting,
-                            requestedAuthorSettings.AudiobookMonitorFuture,
+                            requestedAuthorSettings.AudiobookMonitored,
+                            requestedAuthorSettings.AudiobookMonitorNewItems,
                             null,
                             null,
                             null,
@@ -218,8 +219,8 @@ namespace NzbDrone.Core.Books
                             null,
                             requestedAuthorSettings.EbookQualityProfileId,
                             requestedAuthorSettings.EbookMetadataProfileId,
-                            requestedAuthorSettings.EbookMonitorExisting,
-                            requestedAuthorSettings.EbookMonitorFuture,
+                            requestedAuthorSettings.EbookMonitored,
+                            requestedAuthorSettings.EbookMonitorNewItems,
                             requestedAuthorSettings.EbookRootFolderPath);
                     }
                 }
@@ -254,7 +255,9 @@ namespace NzbDrone.Core.Books
                     }
                 }
                 
-                if (book.AddOptions?.SearchForNewBook == true)
+                if (book.AddOptions?.SearchForNewBook == true ||
+                    isSpecificBookIntentForExistingAuthor ||
+                    isAllBooksIntentForExistingAuthor)
                 {
                     dbAuthor = EnsureMediaTypeMonitoringForRequestedBook(dbAuthor, bookMediaType);
                     book.Author = dbAuthor;
@@ -296,13 +299,22 @@ namespace NzbDrone.Core.Books
             // Persist the book to the database (editions will be available in DB now)
             _bookService.AddBook(book, doRefresh);
 
-                // If any monitored book was added, ensure the author is marked monitored so background sync/refresh picks it up.
-                if ((book.AudiobookMonitored || book.EbookMonitored) && book.Author != null && !book.Author.Monitored)
+            if (isAllBooksIntentForExistingAuthor)
+            {
+                _bookMonitoredService.SetBookMonitoredStatus(dbAuthor, new MonitoringOptions
                 {
-                    book.Author.Monitored = true;
-                    _authorService.UpdateAuthor(book.Author);
-                    _logger.DebugSafe("Set author '{0}' to monitored because a monitored book was added", book.Author.Name);
-                }
+                    Monitor = MonitorTypes.All,
+                    MediaType = bookMediaType
+                });
+            }
+
+            // Keep legacy author-level sync alive for monitored single-book adds.
+            if ((book.AudiobookMonitored || book.EbookMonitored) && book.Author != null && !book.Author.Monitored)
+            {
+                book.Author.Monitored = true;
+                _authorService.UpdateAuthor(book.Author);
+                _logger.DebugSafe("Set author '{0}' to monitored because a monitored book was added", book.Author.Name);
+            }
 
             // Fallback: if this book was not imported with the author, ensure a best edition is monitored
             try
@@ -393,7 +405,7 @@ namespace NzbDrone.Core.Books
         private Author EnsureMediaTypeMonitoringForRequestedBook(Author author, BookMediaType mediaType)
         {
             var mediaTypeName = mediaType == BookMediaType.Audiobook ? "audiobook" : "ebook";
-            _authorService.PromoteMediaTypeMonitoringToSelected(author.Id, mediaTypeName);
+            _authorService.EnsureMediaTypeMonitoring(author.Id, mediaTypeName);
             return _authorService.GetAuthor(author.Id) ?? author;
         }
 
@@ -420,6 +432,13 @@ namespace NzbDrone.Core.Books
             var mediaType = requestedBook.MediaType;
             var searchRequested = requestedBook.AddOptions?.SearchForNewBook == true;
             var requestedIds = new List<string> { workProviderId };
+
+            // An explicit add reverses a matching import-list exclusion before the
+            // authoritative author blob is normalized. Waiting until after import
+            // would let the exclusion remove the requested work and strand the
+            // pending request forever.
+            RemoveMatchingImportListExclusions(requestedBook);
+
             var config = BuildRequestedBookMonitoringConfig(requestedBook, requestedIds, searchRequested);
             var author = await _authorLibraryService.AddAuthorAsync(authorProviderId, config);
             if (author?.Id < 0)
@@ -491,8 +510,10 @@ namespace NzbDrone.Core.Books
             var author = book.Author ?? new Author();
             var mediaType = book.MediaType;
             var isAudiobook = mediaType == BookMediaType.Audiobook;
-            var isSpecificBook = author.AddOptions?.Monitor == MonitorTypes.SpecificBook ||
-                                 (isAudiobook ? author.AudiobookMonitorExisting : author.EbookMonitorExisting) == 2;
+            var isSpecificBook = author.AddOptions?.Monitor == MonitorTypes.SpecificBook;
+            var initialMonitorMode = author.AddOptions?.Monitor == MonitorTypes.All
+                ? MonitorTypes.All
+                : MonitorTypes.SpecificBook;
 
             return new MonitoringConfig
             {
@@ -500,11 +521,16 @@ namespace NzbDrone.Core.Books
                 AuthorName = author.Name,
                 CreateAudiobook = isAudiobook,
                 CreateEbook = !isAudiobook,
-                MonitorNewItems = author.Monitored,
-                AudiobookMonitorExisting = isAudiobook && isSpecificBook ? 2 : author.AudiobookMonitorExisting,
-                AudiobookMonitorFuture = author.AudiobookMonitorFuture,
-                EbookMonitorExisting = !isAudiobook && isSpecificBook ? 2 : author.EbookMonitorExisting,
-                EbookMonitorFuture = author.EbookMonitorFuture,
+                AudiobookMonitored = isAudiobook ? true : author.AudiobookMonitored,
+                AudiobookMonitorNewItems = author.AudiobookMonitorNewItems,
+                AudiobookMonitorExistingMode = isAudiobook && requestedIds?.Any() == true
+                    ? initialMonitorMode
+                    : null,
+                EbookMonitored = !isAudiobook ? true : author.EbookMonitored,
+                EbookMonitorNewItems = author.EbookMonitorNewItems,
+                EbookMonitorExistingMode = !isAudiobook && requestedIds?.Any() == true
+                    ? initialMonitorMode
+                    : null,
                 AudiobookQualityProfileId = author.AudiobookQualityProfileId,
                 EbookQualityProfileId = author.EbookQualityProfileId,
                 AudiobookMetadataProfileId = author.AudiobookMetadataProfileId,

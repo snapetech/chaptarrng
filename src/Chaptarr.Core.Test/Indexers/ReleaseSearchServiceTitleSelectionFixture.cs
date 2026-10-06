@@ -120,6 +120,7 @@ namespace Chaptarr.Core.Test.Indexers
             {
                 Id = 18,
                 Name = "J.K. Rowling",
+                EbookMonitored = true,
                 EbookQualityProfileId = 2,
                 Books = new List<Book>()
             };
@@ -137,6 +138,7 @@ namespace Chaptarr.Core.Test.Indexers
                 Author = author,
                 AuthorId = author.Id,
                 Title = "Harry Potter and the Sorcerer's Stone, Book 1",
+                EbookMonitored = true,
                 MediaType = BookMediaType.Ebook,
                 Editions = new List<Edition> { monitoredEdition }
             };
@@ -163,6 +165,7 @@ namespace Chaptarr.Core.Test.Indexers
             {
                 Id = 18,
                 Name = "J.K. Rowling",
+                EbookMonitored = true,
                 EbookQualityProfileId = 2,
                 Books = new List<Book>()
             };
@@ -172,6 +175,7 @@ namespace Chaptarr.Core.Test.Indexers
                 Author = author,
                 AuthorId = author.Id,
                 Title = "Harry Potter and the Philosopher's Stone",
+                EbookMonitored = true,
                 MediaType = BookMediaType.Ebook,
                 Editions = new List<Edition>
                 {

@@ -36,7 +36,7 @@ runtime, while source builds require the .NET 10 SDK.
 - **Discovered integration contract:** SeerrNG can negotiate format routes, provider identity, paged library scans, and pending-import support through `GET /api/v1/system/capabilities`, while the app keeps its `Chaptarr` API identity for compatible clients.
 - **Restricted service access:** ChaptarrNG `0.9.941` and later can use a SeerrNG-only API key for book requests, searches, library status, and pending imports without granting global administration or destructive access.
 - **Direct ebook downloads:** An optional built-in indexer and download client can search configured sources, use API-key downloads, and optionally fall back to browser-assisted links. Chaptarr tracks and imports supported files without requiring a separate download-client service.
-- **Protected backups and maintained distributions:** Full backups can use passphrase-based authenticated encryption. Fork-owned releases publish container images and maintain Unraid and YunoHost packages.
+- **Protected backups and maintained distributions:** Full backups can use passphrase-based authenticated encryption. Fork-owned releases publish container images and maintain the Unraid package.
 
 The [fork feature guide](docs/FORK_FEATURES.md) maps these changes to setup,
 API, security, and distribution documentation. The [changelog](CHANGELOG.md)

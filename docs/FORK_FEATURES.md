@@ -124,10 +124,11 @@ ChaptarrNG publishes versioned stable releases from its maintained `main`
 branch and builds fork-owned container images for GHCR. Release notes and the
 changelog summarize user-facing changes and required operator actions.
 
-The fork also maintains an [Unraid Community Applications
-package](https://github.com/snapetech/chaptarrng-unraid) and a [YunoHost
-package](https://github.com/YunoHost-Apps/chaptarrng_ynh). Check each package's
-instructions for supported architectures, paths, and upgrade steps.
+The fork maintains an [Unraid Community Applications
+package](https://github.com/snapetech/chaptarrng-unraid). The YunoHost package
+remains available as a legacy reference, but ChaptarrNG no longer publishes or
+updates it. Existing installations remain on their last published package;
+operators must move to a supported deployment or maintain updates independently.
 
 ## Release history
 

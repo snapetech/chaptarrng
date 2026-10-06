@@ -250,7 +250,7 @@ namespace NzbDrone.Common.Disk
         {
             Ensure.That(path, () => path).IsValidPath(PathValidationType.CurrentOs);
             path = ResolveExistingFilePathForWrite(path, "delete file", allowMissing: true);
-            Logger.Trace("Deleting file: {0}", path);
+            Logger.Trace("Deleting file: {0}", CleanseLogMessage.Cleanse(path));
 
             RemoveReadOnly(path);
 
@@ -673,9 +673,9 @@ namespace NzbDrone.Common.Disk
             if (readResolvedPath.IsNotNullOrWhiteSpace())
             {
                 Logger.Warn("Refusing to {0} '{1}' because it only matched '{2}' using loose Unicode path recovery. No files were changed.",
-                    operation,
-                    path,
-                    readResolvedPath);
+                    CleanseLogMessage.Cleanse(operation),
+                    CleanseLogMessage.Cleanse(path),
+                    CleanseLogMessage.Cleanse(readResolvedPath));
 
                 throw new FileNotFoundException(
                     string.Format("File could not be safely resolved for {0}: {1}. Loose read match was: {2}", operation, path, readResolvedPath),
@@ -718,9 +718,9 @@ namespace NzbDrone.Common.Disk
             if (readResolvedDestination.IsNotNullOrWhiteSpace())
             {
                 Logger.Warn("Refusing to overwrite '{0}' for {1} because it only matched '{2}' using loose Unicode path recovery. No files were changed.",
-                    destination,
-                    operation,
-                    readResolvedDestination);
+                    CleanseLogMessage.Cleanse(destination),
+                    CleanseLogMessage.Cleanse(operation),
+                    CleanseLogMessage.Cleanse(readResolvedDestination));
 
                 throw new IOException(string.Format("Destination could not be safely resolved for {0}: {1}. Loose read match was: {2}", operation, destination, readResolvedDestination));
             }

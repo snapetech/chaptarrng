@@ -3,6 +3,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using NzbDrone.Common.Http;
+using NzbDrone.Common.Instrumentation;
 using NzbDrone.Core.Download.Clients;
 
 namespace NzbDrone.Core.Download.Clients.Direct
@@ -66,7 +67,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
             }
             catch (OperationCanceledException)
             {
-                _logger.Debug("Direct download '{0}' was cancelled.", downloadId);
+                _logger.Debug("Direct download '{0}' was cancelled.", CleanseLogMessage.Cleanse(downloadId));
             }
             finally
             {
@@ -145,11 +146,11 @@ namespace NzbDrone.Core.Download.Clients.Direct
             var browserResolvedUrl = await _browserResolver.TryResolveSlowDownloadUrlAsync(state.DownloadUrl, cancellationToken);
             if (browserResolvedUrl != null)
             {
-                _logger.Debug("Deferred Playwright resolved transient URL for '{0}'.", state.Title);
+                _logger.Debug("Deferred Playwright resolved transient URL for '{0}'.", CleanseLogMessage.Cleanse(state.Title));
                 return browserResolvedUrl;
             }
 
-            _logger.Warn("Deferred Playwright could not resolve a URL for '{0}', falling back to stored URL.", state.Title);
+            _logger.Warn("Deferred Playwright could not resolve a URL for '{0}', falling back to stored URL.", CleanseLogMessage.Cleanse(state.Title));
             return state.DownloadUrl;
         }
 

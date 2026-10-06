@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Instrumentation;
 
 namespace NzbDrone.Core.Download.Clients.Direct
 {
@@ -46,7 +47,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
             }
             catch (Exception ex)
             {
-                _logger.Debug(ex, "Playwright browser is not available: {0}", ex.Message);
+                _logger.Debug("Playwright browser is not available: {0}", CleanseLogMessage.Cleanse(ex.ToString()));
                 return false;
             }
         }
@@ -109,7 +110,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    _logger.Debug("Browser timed out or failed waiting for download links on {0}: {1}", Redact(infoUrl), ex.Message);
+                    _logger.Debug("Browser timed out or failed waiting for download links on {0}: {1}", Redact(infoUrl), CleanseLogMessage.Cleanse(ex.Message));
                 }
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -138,7 +139,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
                     return directFileUrl;
                 }
 
-                _logger.Debug("Browser could not find any download link on {0}", infoUrl);
+                _logger.Debug("Browser could not find any download link on {0}", Redact(infoUrl));
                 await CloseAsync(browser, playwright);
                 return null;
             }
@@ -150,7 +151,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
                     throw new OperationCanceledException(cancellationToken);
                 }
 
-                _logger.Warn(ex, "Browser download resolution failed for {0}: {1}", Redact(infoUrl), ex.Message);
+                _logger.Warn("Browser download resolution failed for {0}: {1}", Redact(infoUrl), CleanseLogMessage.Cleanse(ex.ToString()));
                 return null;
             }
         }
@@ -233,7 +234,8 @@ namespace NzbDrone.Core.Download.Clients.Direct
             }
 
             var queryIndex = url.IndexOf('?');
-            return queryIndex >= 0 ? url[..queryIndex] + "?[redacted]" : url;
+            var redacted = queryIndex >= 0 ? url[..queryIndex] + "?[redacted]" : url;
+            return CleanseLogMessage.Cleanse(redacted);
         }
     }
 }

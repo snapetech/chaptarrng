@@ -19,6 +19,13 @@ namespace Chaptarr.Core.Test.Common
             Assert.That(cleansed, Does.Not.Contain(secret));
             Assert.That(cleansed, Does.Contain("(removed)"));
         }
+
+        [Test]
+        public void should_escape_log_line_separators()
+        {
+            var cleansed = CleanseLogMessage.Cleanse("download id\r\nforged\u0085\u2028\u2029entry");
+
+            Assert.That(cleansed, Is.EqualTo("download id\\r\\nforged\\u0085\\u2028\\u2029entry"));
+        }
     }
 }
-

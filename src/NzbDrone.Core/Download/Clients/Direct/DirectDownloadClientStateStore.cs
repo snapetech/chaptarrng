@@ -6,6 +6,7 @@ using System.Linq;
 using NLog;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Instrumentation;
 using NzbDrone.Common.Serializer;
 
 namespace NzbDrone.Core.Download.Clients.Direct
@@ -61,7 +62,7 @@ namespace NzbDrone.Core.Download.Clients.Direct
 
                 if (!Json.TryDeserialize<DirectDownloadClientState>(json, out var state) || state == null)
                 {
-                    _logger.Warn("Ignoring malformed Direct download state file '{0}'.", stateFilePath);
+                    _logger.Warn("Ignoring malformed Direct download state file '{0}'.", CleanseLogMessage.Cleanse(stateFilePath));
                     return null;
                 }
 

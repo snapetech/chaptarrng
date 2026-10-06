@@ -546,7 +546,10 @@ namespace NzbDrone.Core.Books.Services
             }
             catch (Exception ex)
             {
-                _logger.Warn(ex, "Failed to merge {0} for existing pending import {1}", fieldName, providerId);
+                _logger.Warn("Failed to merge {0} for existing pending import {1}: {2}",
+                    CleanseLogMessage.Cleanse(fieldName),
+                    CleanseLogMessage.Cleanse(providerId),
+                    CleanseLogMessage.Cleanse(ex.ToString()));
                 return false;
             }
         }

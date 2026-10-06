@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NzbDrone.Common.Instrumentation;
 using NLog;
 
 namespace NzbDrone.Core.Books
@@ -27,7 +28,7 @@ namespace NzbDrone.Core.Books
         {
             if (monitoringOptions != null)
             {
-                _logger.Debug("[{0}] Setting book monitored status.", author.Name);
+                _logger.Debug("[{0}] Setting book monitored status.", CleanseLogMessage.Cleanse(author.Name));
 
                 var allBooks = _bookService.GetBooksByAuthor(author.Id);
                 var books = allBooks;

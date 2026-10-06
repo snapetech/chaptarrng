@@ -153,6 +153,9 @@ jobs:
     - name: Install frontend dependencies
       run: yarn install --frozen-lockfile
 
+    - name: Check React Router context
+      run: yarn check-react-router-context
+
     - name: Type-check frontend
       run: yarn typecheck
 

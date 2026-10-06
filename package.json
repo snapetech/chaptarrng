@@ -12,6 +12,7 @@
     "typecheck": "tsc -p frontend/tsconfig.json",
     "lint": "eslint --config frontend/.eslintrc.js --ignore-path frontend/.eslintignore frontend/",
     "check-direct-download": "node frontend/build/check-direct-download-contract.js",
+    "check-react-router-context": "node scripts/check-react-router-context.cjs",
     "lint-fix": "yarn lint --fix",
     "check-translations": "node frontend/build/check-missing-translation-keys.js",
     "stylelint-linux": "stylelint $(find frontend -name '*.css') --config frontend/.stylelintrc",
@@ -41,7 +42,7 @@
     "@microsoft/signalr": "10.0.11",
     "@sentry/browser": "7.119.1",
     "@sentry/integrations": "7.120.4",
-    "@types/node": "24.19.0",
+    "@types/node": "26.6.4",
     "@types/react": "18.2.79",
     "@types/react-dom": "18.2.25",
     "classnames": "2.5.1",
@@ -79,7 +80,7 @@
     "react-popper": "1.3.7",
     "react-redux": "7.2.4",
     "react-router": "5.3.4",
-    "react-router-dom": "5.2.0",
+    "react-router-dom": "5.3.4",
     "react-slider": "1.3.3",
     "react-tabs": "4.3.0",
     "react-text-truncate": "0.19.0",
@@ -91,7 +92,7 @@
     "redux-thunk": "2.4.2",
     "reselect": "5.3.0",
     "stacktrace-js": "2.0.2",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   },
   "devDependencies": {
     "@babel/core": "7.29.6",
@@ -192,6 +193,6 @@
     "@typescript-eslint/parser/**/brace-expansion": "2.1.7",
     "filemanager-webpack-plugin/**/readdir-glob/**/brace-expansion": "2.1.7",
     "rimraf/**/brace-expansion": "5.0.12",
-    "**/@types/node": "24.19.0"
+    "**/@types/node": "26.6.4"
   }
 }

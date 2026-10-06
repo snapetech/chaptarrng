@@ -4,6 +4,30 @@ ChaptarrNG release notes highlight user-facing changes and operating guidance.
 Each release combines curated entries from release-notes/ with technical
 history grouped from conventional commits.
 
+## [0.9.966](https://github.com/snapetech/chaptarrng/compare/v0.9.942..v0.9.966) - 2026-10-06
+
+### User-facing changes
+
+#### Fixed
+
+- **Navigation:** Fresh installations now reach the sign-in screen instead of failing while React Router initializes.
+
+#### Security
+
+- **Logging:** Log messages now escape line separators and redact sensitive values from download titles, filenames, and browser errors. The build also uses patched CSS selector and source-map parsers.
+
+### Bug Fixes
+- *(security)* Cleanse remaining import log values - ([9495f80](https://github.com/snapetech/chaptarrng/commit/9495f804d80d9f57cd93376d4a2c28d12294a1fb))
+- *(security)* Update vulnerable frontend parsers - ([54be4d9](https://github.com/snapetech/chaptarrng/commit/54be4d9f763bc58db7dbd8edb8ee26af01c6dbc1))
+- *(security)* Cleanse untrusted values before logging - ([0765225](https://github.com/snapetech/chaptarrng/commit/07652259b0719510eca30600eb88a96dc66595a7))
+- *(web)* Restore router context and modernize client types - ([69f021f](https://github.com/snapetech/chaptarrng/commit/69f021f7b254c1681452cc4b4c92a13cdba131bb))
+
+### Documentation
+- Update fork history and download platform support (release-note: none) - ([839ef20](https://github.com/snapetech/chaptarrng/commit/839ef20c0338a1c8eb9bc0dc2ddd0051da5bf986))
+
+### Testing
+- *(search)* Model monitored ebook state - ([b66cb97](https://github.com/snapetech/chaptarrng/commit/b66cb97082b84483c8d92e9a870ac4afab5f93ba))
+
 ## [0.9.942](https://github.com/snapetech/chaptarrng/compare/v0.9.942..v0.9.942) - 2026-10-05
 
 ### User-facing changes

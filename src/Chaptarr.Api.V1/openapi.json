@@ -20299,6 +20299,9 @@
           },
           "restrictedServiceApiKey": {
             "type": "boolean"
+          },
+          "formatSpecificAvailabilityStatistics": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

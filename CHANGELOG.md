@@ -4,6 +4,14 @@ ChaptarrNG release notes highlight user-facing changes and operating guidance.
 Each release combines curated entries from release-notes/ with technical
 history grouped from conventional commits.
 
+## [0.9.967](https://github.com/snapetech/chaptarrng/compare/v0.9.966..v0.9.967) - 2026-10-07
+
+### User-facing changes
+
+#### Added
+
+- **Integration:** SeerrNG capability discovery now advertises the ebook and audiobook availability statistics already exposed by ChaptarrNG, so integrations can select the format-aware data reliably.
+
 ## [0.9.966](https://github.com/snapetech/chaptarrng/compare/v0.9.942..v0.9.966) - 2026-10-06
 
 ### User-facing changes

@@ -4,7 +4,8 @@ ChaptarrNG exposes its Bookshelf API to SeerrNG using the Readarr-compatible
 API shape. The integration capability contract is available at
 `GET /api/v1/system/capabilities`; SeerrNG uses it to select the provider-ID
 dialect, format-scoped routes, paged library endpoint, edition identity rules,
-pending author-import support, and restricted-key support.
+pending author-import support, restricted-key support, and format-specific
+availability statistics.
 
 For a broader overview of maintained behavior beyond the shared Chaptarr base,
 see [ChaptarrNG fork changes](./FORK_FEATURES.md). This guide focuses on
